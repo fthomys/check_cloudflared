@@ -8,14 +8,19 @@ ARCH="amd64"
 
 : "${GPG_KEY_ID:?Please export GPG_KEY_ID first (e.g. export GPG_KEY_ID=ABCD1234)}"
 
+WORKDIR=$(mktemp -d)
+
+cleanup() {
+  echo "[*] Cleaning up $WORKDIR"
+  rm -rf "$WORKDIR"
+}
+trap cleanup EXIT
+
 VERSION=$(curl -s https://api.github.com/repos/$REPO/releases/latest | jq -r .tag_name | sed 's/^v//')
 if [[ -z "$VERSION" ]]; then
     echo "Error: Could not determine version."
     exit 1
 fi
-
-WORKDIR=$(mktemp -d)
-trap 'rm -rf "$WORKDIR"' EXIT
 
 git clone --depth 1 --branch "v$VERSION" https://github.com/$REPO.git "$WORKDIR/src"
 cd "$WORKDIR/src"
